@@ -27,6 +27,8 @@ tasks.withType<KotlinCompile>() {
     kotlinOptions.jvmTarget = "1.8"
 }
 
+gradle
+
 application {
     mainClassName = "MainKt"
 }
