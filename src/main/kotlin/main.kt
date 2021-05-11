@@ -13,18 +13,14 @@ import java.time.format.DateTimeFormatter
 import java.util.*
 
 
-object Main {
-    @JvmStatic
-    fun main(args: Array<String>) {
-        try {
-            val botsApi = TelegramBotsApi(DefaultBotSession::class.java)
-            botsApi.registerBot(MyAmazingBot())
-            KeyboardButton.builder(
-
-            )
-        } catch (e: TelegramApiException) {
-            e.printStackTrace()
-        }
+fun main() {
+    try {
+        val botsApi = TelegramBotsApi(DefaultBotSession::class.java)
+        botsApi.registerBot(MyAmazingBot())
+        KeyboardButton.builder()
+            .build()
+    } catch (e: TelegramApiException) {
+        e.printStackTrace()
     }
 }
 
