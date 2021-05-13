@@ -115,7 +115,7 @@ class MyAmazingBot : TelegramLongPollingBot() {
                             SendMessage(
                                 message.chatId,
                                 """
-                                    Добро пожаловать!
+                                    Добро пожаловать! ${update.message.from}
                                 """
                             )
                         )
