@@ -16,6 +16,7 @@ dependencies {
     api("org.telegram:telegrambots:5.2.0")
     api("org.telegram:telegrambots-abilities:5.2.0")
     api("org.slf4j:slf4j-simple:1.6.1")
+    api("org.postgresql", "postgresql", "42.2.20")
 }
 
 tasks.withType<Test> {

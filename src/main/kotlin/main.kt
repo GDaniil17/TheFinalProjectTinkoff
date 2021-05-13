@@ -5,22 +5,28 @@ import org.telegram.telegrambots.updatesreceivers.DefaultBotSession
 import org.telegram.telegrambots.meta.TelegramBotsApi
 import org.telegram.telegrambots.meta.api.objects.*
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardButton
-import org.telegram.telegrambots.meta.generics.TelegramBot
+import java.net.URI
+import java.sql.DriverManager
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.util.*
+import java.sql.SQLException
+
+import java.net.URISyntaxException
+import java.sql.Connection
 
 
-fun main() {
+fun main(args: Array<String>) {
     try {
         val botsApi = TelegramBotsApi(DefaultBotSession::class.java)
         botsApi.registerBot(MyAmazingBot())
         KeyboardButton.builder()
             .build()
-    } catch (e: TelegramApiException) {
-        e.printStackTrace()
+        MyAmazingBot().getConnection()
+    } catch (e: Exception) {
+        println(e)
     }
 }
 
@@ -31,6 +37,19 @@ class MyAmazingBot : TelegramLongPollingBot() {
     var names = mutableMapOf<String, User>()
     var chatId = mutableMapOf<Int, Long>()
     var versions = mutableMapOf<Int, MutableList<String>>()
+
+    fun getConnection(): Connection? {
+        try {
+            return DriverManager.getConnection(
+                "jdbc:postgresql://rfroahjigykcla:d8cda2b0e73fb49cfc674b79c46f904cba2b097b129e9c568bf5c4a41315ade8@ec2-3-233-43-103.compute-1.amazonaws.com:5432/d92f5ndp5s8m99",
+                "rfroahjigykcla",
+                "d8cda2b0e73fb49cfc674b79c46f904cba2b097b129e9c568bf5c4a41315ade8"
+            )
+        }catch (e: Exception){
+            println(e)
+        }
+        return null
+    }
 
     fun getAllVersions(messageText: String, userId: String) {
         println("1) $messageText")
@@ -75,7 +94,6 @@ class MyAmazingBot : TelegramLongPollingBot() {
     }
 
     override fun onUpdateReceived(update: Update) {
-
         // We check if the update has a message and the message has text
         if (update.hasEditedMessage()) {
             //println(versions[update.editedMessage.messageId])
@@ -162,17 +180,20 @@ class MyAmazingBot : TelegramLongPollingBot() {
                                 }
                                 getAllVersions(text, name)
                             } else {
-                                if (update.message.replyToMessage.text.count{update.message.replyToMessage.text.contains(" |")} >= 2){
+                                if (update.message.replyToMessage.text.count {
+                                        update.message.replyToMessage.text.contains(
+                                            " |"
+                                        )
+                                    } >= 2) {
                                     val text = update.message.replyToMessage.text.split(" |")[0]
                                     val name = update.message.replyToMessage.text.split(" |")[2].replace(" by ", "")
                                     println(text + name)
                                     println(names)
                                     getAllVersions(text, name)
-                                }
-                                else{
+                                } else {
                                     val text = update.message.replyToMessage.text
                                     val name = update.message.replyToMessage.from.firstName
-                                    println(text+name)
+                                    println(text + name)
                                     getAllVersions(text, name)
                                 }
 
@@ -249,7 +270,7 @@ class MyAmazingBot : TelegramLongPollingBot() {
     }
 
     override fun getBotUsername(): String {
-        return "Kursach"
+        return "FinalProjectTinkoff"
     }
 
     override fun getBotToken(): String {
