@@ -24,7 +24,6 @@ fun main(args: Array<String>) {
         botsApi.registerBot(MyAmazingBot())
         KeyboardButton.builder()
             .build()
-        MyAmazingBot().getConnection()
     } catch (e: Exception) {
         println(e)
     }
@@ -37,19 +36,6 @@ class MyAmazingBot : TelegramLongPollingBot() {
     var names = mutableMapOf<String, User>()
     var chatId = mutableMapOf<Int, Long>()
     var versions = mutableMapOf<Int, MutableList<String>>()
-
-    fun getConnection(): Connection? {
-        try {
-            return DriverManager.getConnection(
-                "jdbc:postgresql://rfroahjigykcla:d8cda2b0e73fb49cfc674b79c46f904cba2b097b129e9c568bf5c4a41315ade8@ec2-3-233-43-103.compute-1.amazonaws.com:5432/d92f5ndp5s8m99",
-                "rfroahjigykcla",
-                "d8cda2b0e73fb49cfc674b79c46f904cba2b097b129e9c568bf5c4a41315ade8"
-            )
-        }catch (e: Exception){
-            println(e)
-        }
-        return null
-    }
 
     fun getAllVersions(messageText: String, userId: String) {
         println("1) $messageText")
@@ -274,7 +260,7 @@ class MyAmazingBot : TelegramLongPollingBot() {
     }
 
     override fun getBotToken(): String {
-        return "1753707611:AAH2-wHcBeRK5TxQqUjQ6N9OQCjC22AaPZU"
+        return "1753707611:AAGBfrE57M7u-p8dV4k-GFV3hx1TkfN9-Pc"
     }
 }
 
