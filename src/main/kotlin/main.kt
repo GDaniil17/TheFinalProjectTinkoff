@@ -4,26 +4,21 @@ import org.telegram.telegrambots.meta.exceptions.TelegramApiException
 import org.telegram.telegrambots.updatesreceivers.DefaultBotSession
 import org.telegram.telegrambots.meta.TelegramBotsApi
 import org.telegram.telegrambots.meta.api.objects.*
-import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardButton
-import java.net.URI
-import java.sql.DriverManager
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardMarkup
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardRow
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.util.*
-import java.sql.SQLException
-
-import java.net.URISyntaxException
-import java.sql.Connection
 
 
 fun main(args: Array<String>) {
     try {
         val botsApi = TelegramBotsApi(DefaultBotSession::class.java)
         botsApi.registerBot(MyAmazingBot())
-        KeyboardButton.builder()
-            .build()
+        //KeyboardButton.builder()
+        //    .build()
     } catch (e: Exception) {
         println(e)
     }
@@ -44,19 +39,50 @@ class MyAmazingBot : TelegramLongPollingBot() {
             println(i.second)
             if (i.second.contains(messageText)) {
                 val message = SendMessage() // Create a SendMessage object with mandatory fields
-                message.text = versions[i.first].toString()
-                execute(SendMessage(chatId[i.first].toString(), "Versions: ${message.text}"))
+                message.text = versions[i.first]?.joinToString(prefix = "[", postfix = "]", separator = "; \n").toString()
+                execute(SendMessage(chatId[i.first].toString(), "Versions: \n${message.text}"))
                 break
             }
         }
     }
 
-    fun getAllMessagesByUserId(userId: String) {
-        for (i in records[names[userId]?.id]!!) {
-            //dates[chatId[i.first]]
-            val message = SendMessage() // Create a SendMessage object with mandatory fields
-            message.text = records[i]?.size.toString()
-            execute(SendMessage(chatId[i.first].toString(), "All: ${i.second}"))
+    fun sendNotification(chatId: Long, responseText: String) {
+
+        val responseMessage = SendMessage(chatId.toString(), responseText)
+        responseMessage.parseMode = "Markdown"
+        // добавляем 4 кнопки
+        responseMessage.replyMarkup = getReplyMarkup(
+            listOf(
+                listOf("/start", "/help"),
+                listOf("/get_all_versions", "/all_messages")
+            )
+        )
+        execute(responseMessage)
+    }
+
+    private fun getReplyMarkup(allButtons: List<List<String>>): ReplyKeyboardMarkup {
+        val markup = ReplyKeyboardMarkup()
+        markup.keyboard = allButtons.map { rowButtons ->
+            val row = KeyboardRow()
+            rowButtons.forEach { rowButton -> row.add(rowButton) }
+            row
+        }
+        return markup
+    }
+
+    fun getAllMessagesByUserId(userId: String, chatIdentifier: String) {
+        if (userId in names.keys) {
+            for (i in records[names[userId]?.id]!!) {
+                //dates[chatId[i.first]]
+                val message = SendMessage() // Create a SendMessage object with mandatory fields
+                message.text = records[i]?.size.toString()
+                if (chatId[i.first].toString() == chatIdentifier) {
+                    var time = Date.from(Instant.ofEpochSecond(dates[i.first]!!.toLong()))
+                    execute(SendMessage(chatId[i.first].toString(), "${i.second} | at $time | by ${userId}"))
+                }
+            }
+        } else {
+            execute(SendMessage(chatIdentifier, "${userId} has not typed anything yet"))
         }
     }
 
@@ -93,33 +119,56 @@ class MyAmazingBot : TelegramLongPollingBot() {
             message.chatId = update.message.chatId.toString()
             message.text = update.message.text
 
-            val responseText = if (!message.text.isNullOrEmpty()) {
+            if (!message.text.isNullOrEmpty()) {
                 var messageText = message.text
                 when {
                     messageText.startsWith("/start") -> {
+                        /*
                         execute(
                             SendMessage(
                                 message.chatId,
                                 """
-                                    Добро пожаловать! ${update.message.from}
+                                    Добро пожаловать! ${update.message.from.firstName}
                                 """
                             )
                         )
+
+                         */
+                        sendNotification(update.message.chatId, "Добро пожаловать! ${update.message.from.firstName}")
                     }
                     messageText.startsWith("/help") -> {
                         execute(
                             SendMessage(
                                 message.chatId,
-                                "/start - чтобы запустить бота \n/get_all_messages_in_certain_period dd.mm.yyyy dd.mm.yyyy UserFirstName \n/get_all_versions When I was walking the rain started; UserFirstName"
+                                "/start - чтобы запустить бота \n/get_all_messages_in_certain_period dd.mm.yyyy dd.mm.yyyy UserFirstName \n/get_all_versions When I was walking the rain started; UserFirstName\n/all_messages Name - чтобы получить все сообщения пользователя"
                             )
                         )
                     }
-                    messageText.startsWith("/all messages") -> getAllMessagesByUserId(
-                        messageText.replace(
-                            "/all messages ",
-                            ""
-                        )
-                    )
+                    messageText.startsWith("/all_messages") -> {
+                        try {
+                            if (!messageText.isNullOrEmpty()) {
+                                if (messageText.contains("/all_messages ")) {
+                                    getAllMessagesByUserId(
+                                        messageText.replace(
+                                            "/all_messages ",
+                                            ""
+                                        ),
+                                        update.message.chatId.toString()
+                                    )
+                                } else {
+                                    getAllMessagesByUserId(
+                                        update.message.from.firstName,
+                                        update.message.chatId.toString()
+                                    )
+                                }
+                            } else {
+
+                            }
+                        } catch (e: Exception) {
+                            execute(SendMessage(message.chatId, "Sorry, but the script is incorrect"))
+                        }
+                    }
+
                     messageText.startsWith("/get_all_messages_in_certain_period") -> {
                         try {
 
@@ -156,7 +205,7 @@ class MyAmazingBot : TelegramLongPollingBot() {
                     }
                     messageText.startsWith("/get_all_versions") -> {
                         try {
-                            if (update.message.replyToMessage.text == null) {
+                            if (update.message.text != null) {
                                 messageText = messageText.replace("/get_all_versions ", "").replace("; ", ";")
                                 val tmp = messageText.split(";").toTypedArray()
                                 val text = tmp[0]
@@ -164,6 +213,8 @@ class MyAmazingBot : TelegramLongPollingBot() {
                                 if (tmp.size >= 2) {
                                     name = tmp[1]
                                 }
+                                println(text)
+                                println(name)
                                 getAllVersions(text, name)
                             } else {
                                 if (update.message.replyToMessage.text.count {
