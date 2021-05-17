@@ -16,6 +16,7 @@ class MyAmazingBot : TelegramLongPollingBot() {
     var names = mutableMapOf<String, User>()
     var chatId = mutableMapOf<Int, Long>()
     var versions = mutableMapOf<Int, MutableList<String>>()
+    var allUsersData = mutableMapOf<Pair<String, String>, MutableList<Pair<Int, MutableList<Pair<String, String>>>>>()
 
     private fun getAllVersions(messageText: String, userId: String) {
         try {
@@ -62,11 +63,11 @@ class MyAmazingBot : TelegramLongPollingBot() {
                 message.text = records[i]?.size.toString()
                 if (chatId[i.first].toString() == chatIdentifier) {
                     val time = Date.from(Instant.ofEpochSecond(dates[i.first]!!.toLong()))
-                    execute(SendMessage(chatId[i.first].toString(), "${i.second} | at $time | by ${userId}"))
+                    execute(SendMessage(chatId[i.first].toString(), "${i.second} | at $time | by $userId"))
                 }
             }
         } else {
-            execute(SendMessage(chatIdentifier, "${userId} has not typed anything yet"))
+            execute(SendMessage(chatIdentifier, "$userId has not typed anything yet"))
         }
     }
 
@@ -74,7 +75,7 @@ class MyAmazingBot : TelegramLongPollingBot() {
         val start = LocalDate.parse(startDate, DateTimeFormatter.ofPattern("dd.MM.yyyy"))
 
         val unixStart = start.atStartOfDay(ZoneId.systemDefault()).toInstant().epochSecond
-        val end = LocalDate.parse(endDate, DateTimeFormatter.ofPattern("dd.MM.yyyy"))
+        val end = LocalDate.parse(endDate, DateTimeFormatter.ofPattern("dd.MM.yyyy")).plusDays(1)
 
         val unixEnd = end.atStartOfDay(ZoneId.systemDefault()).toInstant().epochSecond
         for (i in records[names[userId]?.id]!!) {
@@ -93,7 +94,7 @@ class MyAmazingBot : TelegramLongPollingBot() {
             records.getOrPut(update.editedMessage.from.id) { mutableListOf() }
                 .add(Pair(update.editedMessage.messageId, update.editedMessage.text))
         }
-        if (update.message.isReply && update.message != null) {
+        if (update.message != null && update.message.isReply) {
             if (update.message.text.contains("/all_messages")) {
                 getAllMessagesByUserId(update.message.replyToMessage.from.firstName, update.message.chatId.toString())
             } else if (update.message.text.contains("/get_all_messages_in_certain_period")) {
@@ -193,6 +194,7 @@ class MyAmazingBot : TelegramLongPollingBot() {
                                     }
                                 }
                                 message.text = k.toString()
+                                println(k)
                                 execute(
                                     SendMessage(
                                         message.chatId,
