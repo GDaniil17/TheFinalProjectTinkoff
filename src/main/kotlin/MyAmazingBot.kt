@@ -17,22 +17,22 @@ class MyAmazingBot : TelegramLongPollingBot() {
     var chatId = mutableMapOf<Int, Long>()
     var versions = mutableMapOf<Int, MutableList<String>>()
 
-    fun getAllVersions(messageText: String, userId: String) {
-        println("1) $messageText")
-        println("2) $userId")
-        for (i in records[names[userId]?.id]!!) {
-            println(i.second)
-            if (i.second.contains(messageText)) {
-                val message = SendMessage() // Create a SendMessage object with mandatory fields
-                message.text =
-                    versions[i.first]?.joinToString(prefix = "[", postfix = "]", separator = "; \n").toString()
-                execute(SendMessage(chatId[i.first].toString(), "Versions: \n${message.text}"))
-                break
+    private fun getAllVersions(messageText: String, userId: String) {
+        try {
+            for (i in records[names[userId]?.id]!!) {
+                if (i.second.contains(messageText)) {
+                    val message = SendMessage() // Create a SendMessage object with mandatory fields
+                    message.text =
+                        versions[i.first]?.joinToString(prefix = "[", postfix = "]", separator = "; \n").toString()
+                    execute(SendMessage(chatId[i.first].toString(), "Versions: \n${message.text}"))
+                    break
+                }
             }
+        } catch (e: Exception) {
         }
     }
 
-    fun sendNotification(chatId: Long, responseText: String) {
+    private fun sendNotification(chatId: Long, responseText: String) {
 
         val responseMessage = SendMessage(chatId.toString(), responseText)
         responseMessage.parseMode = "Markdown"
@@ -55,7 +55,7 @@ class MyAmazingBot : TelegramLongPollingBot() {
         return markup
     }
 
-    fun getAllMessagesByUserId(userId: String, chatIdentifier: String) {
+    private fun getAllMessagesByUserId(userId: String, chatIdentifier: String) {
         if (userId in names.keys) {
             for (i in records[names[userId]?.id]!!) {
                 val message = SendMessage()
@@ -70,7 +70,7 @@ class MyAmazingBot : TelegramLongPollingBot() {
         }
     }
 
-    fun getAllMessagesInCertainPeriod(startDate: String, endDate: String, userId: String, chatIdAdr: Long) {
+    private fun getAllMessagesInCertainPeriod(startDate: String, endDate: String, userId: String, chatIdAdr: Long) {
         val start = LocalDate.parse(startDate, DateTimeFormatter.ofPattern("dd.MM.yyyy"))
 
         val unixStart = start.atStartOfDay(ZoneId.systemDefault()).toInstant().epochSecond
@@ -93,12 +93,10 @@ class MyAmazingBot : TelegramLongPollingBot() {
             records.getOrPut(update.editedMessage.from.id) { mutableListOf() }
                 .add(Pair(update.editedMessage.messageId, update.editedMessage.text))
         }
-        if (update.message.isReply) {
+        if (update.message.isReply && update.message != null) {
             if (update.message.text.contains("/all_messages")) {
-                println(update.message.replyToMessage.from.firstName)
                 getAllMessagesByUserId(update.message.replyToMessage.from.firstName, update.message.chatId.toString())
             } else if (update.message.text.contains("/get_all_messages_in_certain_period")) {
-                println(update.message.replyToMessage.from.firstName)
                 var messageText = update.message.text
                 try {
                     for (i in records.keys) {
@@ -128,15 +126,16 @@ class MyAmazingBot : TelegramLongPollingBot() {
                     }
                     getAllMessagesInCertainPeriod(startDate, endDate, name, update.message.replyToMessage.chatId)
                 } catch (e: Exception) {
-                    println(e.message)
                 }
-            }
+            } else
+                if (update.message.text.contains("/get_all_versions")) {
+                    getAllVersions(update.message.replyToMessage.text, update.message.replyToMessage.from.firstName)
+                }
         }
         if (update.hasMessage() && update.message.hasSticker()) {
-
             execute(SendMessage(update.message.chatId.toString(), "\uD83D\uDE00"))
         }
-        if (update.hasMessage() && update.message.hasText()) {
+        if (!update.message.isReply && update.hasMessage() && update.message.hasText()) {
             val message = SendMessage()
             message.chatId = update.message.chatId.toString()
             message.text = update.message.text
@@ -209,7 +208,6 @@ class MyAmazingBot : TelegramLongPollingBot() {
                             if (tmp.size >= 3) {
                                 name = tmp[2]
                             }
-                            //println(startDate + endDate + name);
                             getAllMessagesInCertainPeriod(startDate, endDate, name, message.chatId.toLong())
                         } catch (e: Exception) {
                             execute(SendMessage(message.chatId, "Sorry, but the script is incorrect"))
@@ -225,8 +223,6 @@ class MyAmazingBot : TelegramLongPollingBot() {
                                 if (tmp.size >= 2) {
                                     name = tmp[1]
                                 }
-                                println(text)
-                                println(name)
                                 getAllVersions(text, name)
                             } else {
                                 if (update.message.replyToMessage.text.count {
@@ -237,13 +233,10 @@ class MyAmazingBot : TelegramLongPollingBot() {
                                     val text = update.message.replyToMessage.text.split(" |")[0]
                                     val name =
                                         update.message.replyToMessage.text.split(" |")[2].replace(" by ", "")
-                                    println(text + name)
-                                    println(names)
                                     getAllVersions(text, name)
                                 } else {
                                     val text = update.message.replyToMessage.text
                                     val name = update.message.replyToMessage.from.firstName
-                                    println(text + name)
                                     getAllVersions(text, name)
                                 }
 
