@@ -5,7 +5,7 @@ import org.telegram.telegrambots.meta.TelegramBotsApi
 fun main() {
     try {
         val botsApi = TelegramBotsApi(DefaultBotSession::class.java)
-        botsApi.registerBot(MyAmazingBot_2())
+        botsApi.registerBot(MyAmazingBot())
     } catch (e: Exception) {
         println(e)
     }
