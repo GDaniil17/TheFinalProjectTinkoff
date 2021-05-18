@@ -33,7 +33,7 @@ tasks.withType<KotlinCompile>().configureEach {
 
 tasks {
     named<com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar>("shadowJar") {
-        archiveFileName.set("kursach.jar")
+        archiveFileName.set("Kursach.jar")
         mergeServiceFiles()
         manifest {
             attributes(
