@@ -21,9 +21,7 @@ class MyAmazingBot_2 : TelegramLongPollingBot() {
 
     override fun onUpdateReceived(update: Update) {
         if (update.hasEditedMessage()) {
-            println(messages)
             if (MessageKey(update.editedMessage.from.id, update.editedMessage.chatId) in messages) {
-                println(update.editedMessage.text)
                 if (MessageKey(
                         update.editedMessage.from.id,
                         update.editedMessage.chatId
@@ -57,7 +55,6 @@ class MyAmazingBot_2 : TelegramLongPollingBot() {
         }
         if (update.message != null && update.message.isReply) {
             if (update.message.text.contains("/all_messages")) {
-                println(update.message.replyToMessage.from.firstName)
                 getAllMessagesByUserId(
                     update.message.replyToMessage.from.id,
                     update.message.chatId,
@@ -95,13 +92,11 @@ class MyAmazingBot_2 : TelegramLongPollingBot() {
             sendMessage(update.message.chatId, "\uD83D\uDE00")
         }
         if (update.message != null && !update.message.isReply && update.hasMessage() && update.message.hasText()) {
-            println(3)
             val message = SendMessage()
             val chatId = update.message.chatId
             message.text = update.message.text
 
             if (message.text.isNotEmpty()) {
-                println(2)
                 var messageText = message.text
                 when {
                     messageText.startsWith("/start") -> {
@@ -199,7 +194,6 @@ class MyAmazingBot_2 : TelegramLongPollingBot() {
                         }
                     }
                     else -> {
-                        println(5)
                         if (MessageKey(
                                 update.message.from.id,
                                 update.message.chatId
@@ -237,18 +231,12 @@ class MyAmazingBot_2 : TelegramLongPollingBot() {
 
     private fun getAllVersions(messageText: String, userId: Long, chatId: Long) {
         try {
-            //?.put(update.message.messageId, mutableListOf(update.message))
-            println(messages)
             for (i in
             messages[MessageKey(
                 userId,
                 chatId
             )]?.messages?.values!!) {
-                println("!!!!!!!!!!")
-                println(i)
                 if (i.contains(messageText)) {
-                    println("!!!!!!!!!!")
-                    println(i)
                     sendMessage(
                         chatId,
                         "Versions: \n${
@@ -287,7 +275,6 @@ class MyAmazingBot_2 : TelegramLongPollingBot() {
     }
 
     private fun getAllMessagesByUserId(userId: Long, chatIdentifier: Long, name: String) {
-        println(messages)
         if (MessageKey(userId, chatIdentifier) in messages.keys) {
             for (i in messages[MessageKey(
                 userId,
@@ -316,11 +303,11 @@ class MyAmazingBot_2 : TelegramLongPollingBot() {
         val end = LocalDate.parse(endDate, DateTimeFormatter.ofPattern("dd.MM.yyyy")).plusDays(1)
 
         val unixEnd = end.atStartOfDay(ZoneId.systemDefault()).toInstant().epochSecond
-
         for (i in messages[MessageKey(
             userId,
             chatIdAdr
         )]?.messages?.keys!!) {
+            println(dates[i])
             if ((unixStart <= dates[i]!!) && (dates[i]!! <= unixEnd)) {
                 val time = Date.from(Instant.ofEpochSecond(dates[i]!!.toLong()))
                 sendMessage(
