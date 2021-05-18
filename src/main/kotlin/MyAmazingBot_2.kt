@@ -11,13 +11,9 @@ import java.time.format.DateTimeFormatter
 import java.util.*
 
 class MyAmazingBot_2 : TelegramLongPollingBot() {
-    var records = mutableMapOf<Long, MutableList<Pair<Int, String>>>()
-    var dates = mutableMapOf<Int, Int>()
-    var names = mutableMapOf<String, Long>()
-    var chatId = mutableMapOf<Int, Long>()
-    var versions = mutableMapOf<Int, MutableList<String>>()
-
-    val messages = mutableMapOf<MessageKey, MessageValue>()
+    private var dates = mutableMapOf<Int, Int>()
+    private var names = mutableMapOf<String, Long>()
+    private val messages = mutableMapOf<MessageKey, MessageValue>()
 
     override fun onUpdateReceived(update: Update) {
         if (update.hasEditedMessage()) {
@@ -44,13 +40,6 @@ class MyAmazingBot_2 : TelegramLongPollingBot() {
                     date = update.editedMessage.editDate
                 }
                 dates[update.editedMessage.messageId] = date
-
-                /*
-                versions[update.editedMessage.messageId]?.add(update.editedMessage.text)
-                records.getOrPut(update.editedMessage.from.id) { mutableListOf() }
-                    .add(Pair(update.editedMessage.messageId, update.editedMessage.text))
-
-                 */
             }
         }
         if (update.message != null && update.message.isReply) {
@@ -67,16 +56,18 @@ class MyAmazingBot_2 : TelegramLongPollingBot() {
                     val tmp = messageText.split(" ").toTypedArray()
                     val startDate = tmp[0]
                     val endDate = tmp[1]
-                    var name = update.message.replyToMessage.from.firstName
+                    var name = update.message.replyToMessage.from.id
                     if (tmp.size >= 3) {
-                        name = tmp[2]
+                        name = names[tmp[2]]!!
                     }
-                    names[name]?.let {
-                        getAllMessagesInCertainPeriod(
-                            startDate, endDate,
-                            it, update.message.replyToMessage.chatId
-                        )
-                    }
+                    println(
+                            name.toString()+ update.message.replyToMessage.chatId.toString())
+
+                    getAllMessagesInCertainPeriod(
+                        startDate, endDate,
+                        name, update.message.replyToMessage.chatId
+                    )
+
                 } catch (e: Exception) {
                 }
             } else
@@ -147,16 +138,22 @@ class MyAmazingBot_2 : TelegramLongPollingBot() {
                             val tmp = messageText.split(" ").toTypedArray()
                             val startDate = tmp[0]
                             val endDate = tmp[1]
-                            var name = update.message.from.firstName
+                            var name = update.message.from.id
+                            println(tmp.size)
+                            /*
                             if (tmp.size >= 3) {
-                                name = tmp[2]
+                                name = names[tmp[2]]!!
                             }
-                            names[name]?.let {
-                                getAllMessagesInCertainPeriod(
-                                    startDate, endDate,
-                                    it, message.chatId.toLong()
-                                )
-                            }
+
+                             */
+
+                            println(startDate+ endDate+
+                                    name+ update.message.replyToMessage.chatId)
+                            getAllMessagesInCertainPeriod(
+                                startDate, endDate,
+                                name, message.chatId.toLong()
+                            )
+
                         } catch (e: Exception) {
                             sendMessage(chatId, "Sorry, but the script is incorrect")
                         }
@@ -219,7 +216,7 @@ class MyAmazingBot_2 : TelegramLongPollingBot() {
                     }
                 }
             } else {
-                "Я понимаю только текст"
+
             }
         }
     }
@@ -246,7 +243,7 @@ class MyAmazingBot_2 : TelegramLongPollingBot() {
                     return
                 }
             }
-            sendMessage(chatId, "Sorry, the message is not found in database")
+            sendMessage(chatId, "Sorry, but the script is incorrect")
         } catch (e: Exception) {
         }
     }
@@ -297,19 +294,21 @@ class MyAmazingBot_2 : TelegramLongPollingBot() {
     }
 
     private fun getAllMessagesInCertainPeriod(startDate: String, endDate: String, userId: Long, chatIdAdr: Long) {
+        println(111)
         val start = LocalDate.parse(startDate, DateTimeFormatter.ofPattern("dd.MM.yyyy"))
 
         val unixStart = start.atStartOfDay(ZoneId.systemDefault()).toInstant().epochSecond
         val end = LocalDate.parse(endDate, DateTimeFormatter.ofPattern("dd.MM.yyyy")).plusDays(1)
 
         val unixEnd = end.atStartOfDay(ZoneId.systemDefault()).toInstant().epochSecond
+
         for (i in messages[MessageKey(
             userId,
             chatIdAdr
         )]?.messages?.keys!!) {
             println(dates[i])
             if ((unixStart <= dates[i]!!) && (dates[i]!! <= unixEnd)) {
-                val time = Date.from(Instant.ofEpochSecond(dates[i]!!.toLong()))
+                val time = Date.from(dates[i]?.let { Instant.ofEpochSecond(it.toLong()) })
                 sendMessage(
                     chatIdAdr, "${
                         messages[MessageKey(
