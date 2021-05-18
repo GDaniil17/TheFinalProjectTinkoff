@@ -60,9 +60,6 @@ class MyAmazingBot_2 : TelegramLongPollingBot() {
                     if (tmp.size >= 3) {
                         name = names[tmp[2]]!!
                     }
-                    println(
-                            name.toString()+ update.message.replyToMessage.chatId.toString())
-
                     getAllMessagesInCertainPeriod(
                         startDate, endDate,
                         name, update.message.replyToMessage.chatId
@@ -91,10 +88,7 @@ class MyAmazingBot_2 : TelegramLongPollingBot() {
                 var messageText = message.text
                 when {
                     messageText.startsWith("/start") -> {
-                        sendMessage(
-                            chatId,
-                            "Добро пожаловать! ${update.message.from.firstName}"
-                        )
+                        sendNotification(chatId, "Добро пожаловать! ${update.message.from.firstName}")
 
                     }
                     messageText.startsWith("/help") -> {
@@ -139,16 +133,11 @@ class MyAmazingBot_2 : TelegramLongPollingBot() {
                             val startDate = tmp[0]
                             val endDate = tmp[1]
                             var name = update.message.from.id
-                            println(tmp.size)
-                            /*
+
                             if (tmp.size >= 3) {
                                 name = names[tmp[2]]!!
                             }
 
-                             */
-
-                            println(startDate+ endDate+
-                                    name+ update.message.replyToMessage.chatId)
                             getAllMessagesInCertainPeriod(
                                 startDate, endDate,
                                 name, message.chatId.toLong()
@@ -294,7 +283,7 @@ class MyAmazingBot_2 : TelegramLongPollingBot() {
     }
 
     private fun getAllMessagesInCertainPeriod(startDate: String, endDate: String, userId: Long, chatIdAdr: Long) {
-        println(111)
+
         val start = LocalDate.parse(startDate, DateTimeFormatter.ofPattern("dd.MM.yyyy"))
 
         val unixStart = start.atStartOfDay(ZoneId.systemDefault()).toInstant().epochSecond
@@ -306,7 +295,6 @@ class MyAmazingBot_2 : TelegramLongPollingBot() {
             userId,
             chatIdAdr
         )]?.messages?.keys!!) {
-            println(dates[i])
             if ((unixStart <= dates[i]!!) && (dates[i]!! <= unixEnd)) {
                 val time = Date.from(dates[i]?.let { Instant.ofEpochSecond(it.toLong()) })
                 sendMessage(
