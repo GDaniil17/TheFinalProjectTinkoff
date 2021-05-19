@@ -265,7 +265,7 @@ class MyAmazingBot : TelegramLongPollingBot() {
     }
 
     override fun getBotToken(): String {
-        return "1753707611:AAGMfQazVdroFzQ5uVRxoYEtAEo13y39pmo"
+        return "token"
     }
 }
 
